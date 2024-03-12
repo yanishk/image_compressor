@@ -8,12 +8,18 @@
 module Main (main) where
 
 import GetUserInput
+import OpenFile
 import System.Environment(getArgs)
+import Data.Maybe
 
 main :: IO ()
 main = do
     userParams <- getArgs
     _ <- checkParamsNb (userParams)
-    let finalConfig = getParams (defaultImageCompConfig) (userParams)
-    _ <- checkImageCompConfig (finalConfig)
-    print finalConfig
+    let midConfig = getParams (defaultImageCompConfig) (userParams)
+    _ <- checkImageCompConfig (midConfig)
+    let finalConfig = fromJust midConfig
+    let notMaybeFilepath = fromJust (filePath finalConfig)
+    fileOpen <- readFile (notMaybeFilepath)
+    let idk = parseFiletoStruct (lines fileOpen)
+    print idk

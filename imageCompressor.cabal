@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.35.2.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -25,7 +25,9 @@ source-repository head
 
 library
   exposed-modules:
+      GetUserInput
       Lib
+      OpenFile
   other-modules:
       Paths_imageCompressor
   autogen-modules:
@@ -40,7 +42,6 @@ library
 executable imageCompressor-exe
   main-is: Main.hs
   other-modules:
-      GetUserInput
       Paths_imageCompressor
   autogen-modules:
       Paths_imageCompressor
