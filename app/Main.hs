@@ -30,5 +30,5 @@ main = do
     let colorList = parseFiletoStruct (lines fileOpen)
     let nbColor = (nbOfColors finalConfig)
     defCluster <- createClusters (head (removeMaybeInt nbColor)) colorList
-    let finalClusters = recursivePutColor colorList defCluster
+    let finalClusters = iterateTillLimit colorList defCluster 0
     printClusters finalClusters

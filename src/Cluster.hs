@@ -8,7 +8,7 @@
 module Cluster
     (Cluster(..),
     createClusters,
-    recursivePutColor) where
+    iterateTillLimit) where
 
 import OpenFile
 import System.Random (randomRIO)
@@ -73,3 +73,44 @@ putColor color clusts =
 recursivePutColor :: [Color] -> [Cluster] -> [Cluster]
 recursivePutColor [] clusts = clusts
 recursivePutColor (col:r) clusts = recursivePutColor r (putColor col clusts)
+
+getColorsPos :: [Color] -> [(Int, Int, Int)]
+getColorsPos [] = []
+getColorsPos (color:rest) = fromJust (rgb color) : getColorsPos rest
+
+meanCentroid :: [Color] -> (Int, Int, Int) -> [(Int, Int, Int)] -> (Int, Int, Int)
+meanCentroid list (x,y,z) [] = (div x nbElem, div y nbElem, div z nbElem)
+    where
+        nbElem = length list
+meanCentroid list (x1, y1, z1) ((x2,y2,z2):r) = meanCentroid list truple r
+    where
+        truple = (x1 + x2, y1 + y2, z1 + z2)
+
+newCentroid :: Cluster -> Cluster
+newCentroid clust
+    | clusterColors clust == Nothing = clust
+    | otherwise = clust {centroidRgb = Just newCentroidRgb}
+        where
+            newCentroidRgb = (meanCentroid (fromJust (clusterColors clust))
+                (0, 0, 0) (getColorsPos (fromJust (clusterColors clust))))
+
+recursiveNewCentroid :: [Cluster] -> [Cluster]
+recursiveNewCentroid [] = []
+recursiveNewCentroid (clust:r) = newCentroid clust : recursiveNewCentroid r
+
+deleteColorList :: Cluster -> Cluster
+deleteColorList clust = clust {clusterColors = Nothing}
+
+recursiveDeleteList :: [Cluster] -> [Cluster]
+recursiveDeleteList [] = []
+recursiveDeleteList (clust:r) = deleteColorList clust : recursiveDeleteList r
+
+iterateTillLimit :: [Color] -> [Cluster] -> Int -> [Cluster]
+iterateTillLimit _ clusts 15 = clusts
+iterateTillLimit colorL clusts 0 = iterateTillLimit colorL newClusts 1
+    where
+        newClusts = (recursivePutColor colorL clusts)
+iterateTillLimit colorL clusts n =  iterateTillLimit colorL newClusts (n + 1)
+    where
+        newClusts = (recursivePutColor colorL resetClusts)
+        resetClusts = recursiveDeleteList (recursiveNewCentroid clusts)

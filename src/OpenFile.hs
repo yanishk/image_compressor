@@ -13,7 +13,7 @@ data Color =
     Color {
         pos :: Maybe (Int, Int),
         rgb :: Maybe (Int, Int, Int)
-    } deriving (Show)
+    } deriving (Show, Eq)
 
 defaultColor :: Color
 defaultColor = Color
