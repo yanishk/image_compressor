@@ -5,7 +5,7 @@
 -- OpenFile
 -}
 
-module OpenFile (Color(..), parseFiletoStruct) where
+module OpenFile (Color(..), parseFiletoStruct, defaultColor) where
 
 import Text.Read (readMaybe)
 

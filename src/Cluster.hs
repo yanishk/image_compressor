@@ -5,6 +5,8 @@
 -- Cluster
 -}
 
+module Cluster (createClusters, recursivePutColor, printClusters) where
+
 import OpenFile
 import System.Random
 import Data.Maybe
@@ -12,7 +14,7 @@ import Data.Maybe
 data Cluster = Cluster
     { centroidColor :: Color,
     clusterColors :: Maybe [Color]
-    } deriving (Show, Eq)
+    } deriving (Show)
 
 defaultCluster :: Cluster
 defaultCluster = Cluster
@@ -68,8 +70,6 @@ putColor color clusts =
 recursivePutColor :: [Color] -> [Cluster] -> [Cluster]
 recursivePutColor [] clusts = clusts
 recursivePutColor (col:r) clusts = recursivePutColor r (putColor col clusts)
-
-
 
 printColor :: Color -> IO ()
 printColor color = putStr (show (fromJust (pos color)))

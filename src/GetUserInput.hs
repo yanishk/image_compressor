@@ -44,7 +44,6 @@ checkImageCompConfig (Just config)
     | (nbOfColors config) == Nothing = exitWith (ExitFailure 84)
     | (nbOfColors config) < (Just 0) = exitWith (ExitFailure 84)
     | (convergenceLimit config) == Nothing = exitWith (ExitFailure 84)
-    | (convergenceLimit config) < (Just 0) ||
-    (convergenceLimit config) > (Just 1) = exitWith (ExitFailure 84)
+    | (convergenceLimit config) < (Just 0) = exitWith (ExitFailure 84)
     | (filePath config) == Nothing = exitWith (ExitFailure 84)
     | otherwise = return (Just 0)
