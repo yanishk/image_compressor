@@ -11,8 +11,8 @@ module Cluster
     iterateTillLimit) where
 
 import OpenFile
-import System.Random (randomRIO)
-import Data.Maybe (fromJust)
+import System.Random(randomRIO)
+import Data.Maybe(fromJust, isNothing)
 
 data Cluster = Cluster
     { centroidRgb :: Maybe (Int, Int, Int),
@@ -37,34 +37,34 @@ chooseRandomCentroid cluster colorList = do
 createClusters :: Int -> [Color] -> IO [Cluster]
 createClusters 0 _ = return []
 createClusters n colorList = do
-    cluster <- chooseRandomCentroid (defaultCluster) (colorList)
-    rest <- createClusters (n - 1) (colorList)
+    cluster <- chooseRandomCentroid defaultCluster colorList
+    rest <- createClusters (n - 1) colorList
     return (cluster:rest)
 
 distance :: (Int, Int, Int) -> (Int, Int, Int) -> Double
-distance (x1,y1,z1) (x2,y2,z2) = sqrt (fromIntegral ((x1 - x2)^(2::Int) +
-    (y1 - y2)^(2::Int) + (z1 - z2)^(2::Int)))
+distance (x1,y1,z1) (x2,y2,z2) = sqrt (fromIntegral nb)
+    where nb = (x1 - x2)^(2::Int) + (y1 - y2)^(2::Int) + (z1 - z2)^(2::Int)
 
 closest :: Color -> Maybe Double -> Int -> Int -> [Cluster] -> Int
 closest _ _ index _ [] = index
 closest color Nothing 0 0 (cluster:rest) = closest color dist 0 1 rest
     where
-        dist = (Just (distance (fromJust (rgb color))
-            (fromJust (centroidRgb cluster))))
-closest color dist1 index iteration (cluster:rest)
-    | dist1 > dist2 = closest color dist2 iteration (iteration + 1) rest
-    | otherwise = closest color dist1 index iteration rest
+        dist = Just (distance (fromJust (rgb color))
+            (fromJust (centroidRgb cluster)))
+closest color dist2 index iteration (cluster:rest)
+    | dist2 > dist = closest color dist iteration (iteration + 1) rest
+    | otherwise = closest color dist2 index iteration rest
     where
-        dist2 = (Just (distance (fromJust (rgb color))
-            (fromJust (centroidRgb cluster))))
+        dist = Just (distance (fromJust (rgb color))
+            (fromJust (centroidRgb cluster)))
 
-putColor :: Color -> [Cluster] -> [Cluster]
-putColor _ [] = []
-putColor color clusts =
+putColor :: [Cluster] -> Color -> [Cluster]
+putColor [] _ = []
+putColor clusts color =
     take index clusts ++ [newCluster] ++ drop (index + 1) clusts
     where
         index = closest color Nothing 0 0 clusts
-        closestClust = (clusts !! index)
+        closestClust = clusts !! index
         newCluster = case clusterColors closestClust of
             Nothing -> closestClust {clusterColors = Just [color]}
             Just colorList -> closestClust {clusterColors
@@ -72,11 +72,11 @@ putColor color clusts =
 
 recursivePutColor :: [Color] -> [Cluster] -> [Cluster]
 recursivePutColor [] clusts = clusts
-recursivePutColor (col:r) clusts = recursivePutColor r (putColor col clusts)
+recursivePutColor colorList clusts = foldl putColor clusts colorList
 
 getColorsPos :: [Color] -> [(Int, Int, Int)]
 getColorsPos [] = []
-getColorsPos (color:rest) = fromJust (rgb color) : getColorsPos rest
+getColorsPos colorList = map (fromJust . rgb) colorList
 
 meanCentroid :: [Color] -> (Int, Int, Int) -> [(Int, Int, Int)] -> (Int, Int, Int)
 meanCentroid list (x,y,z) [] = (div x nbElem, div y nbElem, div z nbElem)
@@ -88,29 +88,29 @@ meanCentroid list (x1, y1, z1) ((x2,y2,z2):r) = meanCentroid list truple r
 
 newCentroid :: Cluster -> Cluster
 newCentroid clust
-    | clusterColors clust == Nothing = clust
+    | isNothing (clusterColors clust) = clust
     | otherwise = clust {centroidRgb = Just newCentroidRgb}
         where
-            newCentroidRgb = (meanCentroid (fromJust (clusterColors clust))
-                (0, 0, 0) (getColorsPos (fromJust (clusterColors clust))))
+            newCentroidRgb = meanCentroid (fromJust (clusterColors clust))
+                (0, 0, 0) (getColorsPos (fromJust (clusterColors clust)))
 
 recursiveNewCentroid :: [Cluster] -> [Cluster]
 recursiveNewCentroid [] = []
-recursiveNewCentroid (clust:r) = newCentroid clust : recursiveNewCentroid r
+recursiveNewCentroid clusts = map newCentroid clusts
 
 deleteColorList :: Cluster -> Cluster
 deleteColorList clust = clust {clusterColors = Nothing}
 
 recursiveDeleteList :: [Cluster] -> [Cluster]
 recursiveDeleteList [] = []
-recursiveDeleteList (clust:r) = deleteColorList clust : recursiveDeleteList r
+recursiveDeleteList clusts = map deleteColorList clusts
 
 iterateTillLimit :: [Color] -> [Cluster] -> Int -> [Cluster]
 iterateTillLimit _ clusts 15 = clusts
 iterateTillLimit colorL clusts 0 = iterateTillLimit colorL newClusts 1
     where
-        newClusts = (recursivePutColor colorL clusts)
+        newClusts = recursivePutColor colorL clusts
 iterateTillLimit colorL clusts n =  iterateTillLimit colorL newClusts (n + 1)
     where
-        newClusts = (recursivePutColor colorL resetClusts)
+        newClusts = recursivePutColor colorL resetClusts
         resetClusts = recursiveDeleteList (recursiveNewCentroid clusts)
