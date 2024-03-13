@@ -22,12 +22,11 @@ printColorList colors 0 = putStrLn "-" >> printColorList colors 1
 printColorList (Just (color:rest)) n = printColor color >>
                                         printColorList (Just rest) (n + 1)
 
-printCentroid :: Color -> IO ()
-printCentroid centroid = putStrLn "--" >>
-                        print (fromJust (rgb centroid))
+printCentroid :: (Int, Int, Int) -> IO ()
+printCentroid centroid = putStrLn "--" >> print centroid
 
 printClusters :: [Cluster] -> IO ()
 printClusters [] = putStr ""
-printClusters (cluster:r) = printCentroid (centroidColor cluster)
+printClusters (cluster:r) = printCentroid (fromJust (centroidRgb cluster))
                             >> printColorList (clusterColors cluster) 0
                             >> printClusters r

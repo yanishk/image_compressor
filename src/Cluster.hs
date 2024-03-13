@@ -15,13 +15,13 @@ import System.Random (randomRIO)
 import Data.Maybe (fromJust)
 
 data Cluster = Cluster
-    { centroidColor :: Color,
+    { centroidRgb :: Maybe (Int, Int, Int),
     clusterColors :: Maybe [Color]
     } deriving (Show)
 
 defaultCluster :: Cluster
 defaultCluster = Cluster
-   { centroidColor = defaultColor,
+   { centroidRgb = Nothing,
      clusterColors = Nothing}
 
 chooseRandomColor :: [Color] -> IO Color
@@ -32,7 +32,7 @@ chooseRandomColor elemList = do
 chooseRandomCentroid :: Cluster -> [Color] -> IO Cluster
 chooseRandomCentroid cluster colorList = do
     randomColor <- chooseRandomColor colorList
-    return cluster {centroidColor = randomColor}
+    return cluster {centroidRgb = rgb randomColor}
 
 createClusters :: Int -> [Color] -> IO [Cluster]
 createClusters 0 _ = return []
@@ -50,13 +50,13 @@ closest _ _ index _ [] = index
 closest color Nothing 0 0 (cluster:rest) = closest color dist 0 1 rest
     where
         dist = (Just (distance (fromJust (rgb color))
-                (fromJust (rgb (centroidColor cluster)))))
+            (fromJust (centroidRgb cluster))))
 closest color dist1 index iteration (cluster:rest)
     | dist1 > dist2 = closest color dist2 iteration (iteration + 1) rest
     | otherwise = closest color dist1 index iteration rest
     where
         dist2 = (Just (distance (fromJust (rgb color))
-                (fromJust (rgb (centroidColor cluster)))))
+            (fromJust (centroidRgb cluster))))
 
 putColor :: Color -> [Cluster] -> [Cluster]
 putColor _ [] = []
