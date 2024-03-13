@@ -21,5 +21,6 @@ main = do
     let finalConfig = fromJust midConfig
     let notMaybeFilepath = fromJust (filePath finalConfig)
     fileOpen <- readFile (notMaybeFilepath)
-    let idk = parseFiletoStruct (lines fileOpen)
-    print idk
+    let colorList = parseFiletoStruct (lines fileOpen)
+    --defClusters <- createClusters 2 colorList
+    print colorList

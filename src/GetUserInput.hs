@@ -5,7 +5,12 @@
 -- GetUserInput
 -}
 
-module GetUserInput where
+module GetUserInput
+    (ImageCompConfig(..),
+    defaultImageCompConfig,
+    checkParamsNb,
+    getParams,
+    checkImageCompConfig) where
 
 import Text.Read(readMaybe)
 import System.Exit
