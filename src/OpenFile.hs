@@ -5,7 +5,7 @@
 -- OpenFile
 -}
 
-module OpenFile (Pixel(..), parseFiletoStruct, defaultPixel) where
+module OpenFile (Pixel(..), parseFiletoStruct, defaultPixel, checkAllTuples) where
 
 import Text.Read (readMaybe)
 
@@ -30,6 +30,14 @@ checkTuple :: (Int, Int, Int) -> Bool
 checkTuple (x, y, z)
     | isAShort x && isAShort y && isAShort z = True
     | otherwise = False
+
+checkAllTuples :: [Pixel] -> Bool
+checkAllTuples pixels = all checkPixel pixels
+    where
+        checkPixel :: Pixel -> Bool
+        checkPixel pixel = case rgb pixel of
+            Just color -> checkTuple color
+            Nothing -> False
 
 replaceSpecialChars :: Char -> Char
 replaceSpecialChars c

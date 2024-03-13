@@ -32,6 +32,16 @@ finalReadFile col =
     maybereadFile (notMaybeFilepath)
         where notMaybeFilepath = fromJust (filePath col)
 
+processFile :: ImageCompConfig -> String -> IO [Cluster]
+processFile finalConfig fileOpen = do
+    let pixelList = parseFiletoStruct (lines fileOpen)
+    let nbPixel = nbOfPixels finalConfig
+    defCluster <- createClusters (head (removeMaybeInt nbPixel)) pixelList
+    return (iterateTillLimit pixelList defCluster 0)
+    case checkAllTuples pixelList of
+        True -> return (iterateTillLimit pixelList defCluster 0)
+        False -> exitWith (ExitFailure 84)
+
 main :: IO ()
 main = do
     userParams <- getArgs
@@ -42,10 +52,3 @@ main = do
     fileOpen <- finalReadFile finalConfig
     finalClusters <- processFile finalConfig fileOpen
     printClusters finalClusters
-
-processFile :: ImageCompConfig -> String -> IO [Cluster]
-processFile finalConfig fileOpen = do
-    let pixelList = parseFiletoStruct (lines fileOpen)
-    let nbPixel = nbOfPixels finalConfig
-    defCluster <- createClusters (head (removeMaybeInt nbPixel)) pixelList
-    return (iterateTillLimit pixelList defCluster 0)
