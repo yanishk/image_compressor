@@ -10,10 +10,9 @@ module Main (main) where
 import GetUserInput
 import OpenFile
 import Cluster
+import PrintClusters
 import System.Environment(getArgs)
 import Data.Maybe
-import System.Exit (exitWith, ExitCode(..))
-import Text.Read
 
 removeMaybeInt :: Maybe Int -> [Int]
 removeMaybeInt Nothing = []

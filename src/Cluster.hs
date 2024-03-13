@@ -1,15 +1,18 @@
 {-
 -- EPITECH PROJECT, 2024
--- bsImageCompressor
+-- imageCompressor
 -- File description:
 -- Cluster
 -}
 
-module Cluster (createClusters, recursivePutColor, printClusters) where
+module Cluster
+    (Cluster(..),
+    createClusters,
+    recursivePutColor) where
 
 import OpenFile
-import System.Random
-import Data.Maybe
+import System.Random (randomRIO)
+import Data.Maybe (fromJust)
 
 data Cluster = Cluster
     { centroidColor :: Color,
@@ -23,7 +26,7 @@ defaultCluster = Cluster
 
 chooseRandomColor :: [Color] -> IO Color
 chooseRandomColor elemList = do
-    index <- randomRIO (0 , (length elemList) - 1)
+    index <- randomRIO (0 , length elemList - 1)
     return (elemList !! index)
 
 chooseRandomCentroid :: Cluster -> [Color] -> IO Cluster
@@ -39,8 +42,8 @@ createClusters n colorList = do
     return (cluster:rest)
 
 distance :: (Int, Int, Int) -> (Int, Int, Int) -> Double
-distance (x1,y1,z1) (x2,y2,z2)
-    = sqrt (fromIntegral ((x1 - x2)^2 + (y1 - y2)^2 + (z1 - z2)^2))
+distance (x1,y1,z1) (x2,y2,z2) = sqrt (fromIntegral ((x1 - x2)^(2::Int) +
+    (y1 - y2)^(2::Int) + (z1 - z2)^(2::Int)))
 
 closest :: Color -> Maybe Double -> Int -> Int -> [Cluster] -> Int
 closest _ _ index _ [] = index
@@ -48,9 +51,9 @@ closest color Nothing 0 0 (cluster:rest) = closest color dist 0 1 rest
     where
         dist = (Just (distance (fromJust (rgb color))
                 (fromJust (rgb (centroidColor cluster)))))
-closest color (Just dist1) index iteration (cluster:rest)
-    | (Just dist1) > dist2 = closest color dist2 iteration (iteration + 1) rest
-    | otherwise = closest color (Just dist1) index iteration rest
+closest color dist1 index iteration (cluster:rest)
+    | dist1 > dist2 = closest color dist2 iteration (iteration + 1) rest
+    | otherwise = closest color dist1 index iteration rest
     where
         dist2 = (Just (distance (fromJust (rgb color))
                 (fromJust (rgb (centroidColor cluster)))))
@@ -70,24 +73,3 @@ putColor color clusts =
 recursivePutColor :: [Color] -> [Cluster] -> [Cluster]
 recursivePutColor [] clusts = clusts
 recursivePutColor (col:r) clusts = recursivePutColor r (putColor col clusts)
-
-printColor :: Color -> IO ()
-printColor color = putStr (show (fromJust (pos color)))
-                    >> putStr " " >> print (fromJust (rgb color))
-
-printColorList :: Maybe [Color] -> Int -> IO ()
-printColorList (Just []) _ = putStr ""
-printColorList Nothing 0 = putStrLn "-"
-printColorList colors 0 = putStrLn "-" >> printColorList colors 1
-printColorList (Just (color:rest)) n = printColor color >>
-                                        printColorList (Just rest) (n + 1)
-
-printCentroid :: Color -> IO ()
-printCentroid centroid = putStrLn "--" >>
-                        print (fromJust (rgb centroid))
-
-printClusters :: [Cluster] -> IO ()
-printClusters [] = putStr ""
-printClusters (cluster:r) = printCentroid (centroidColor cluster)
-                            >> printColorList (clusterColors cluster) 0
-                            >> printClusters r

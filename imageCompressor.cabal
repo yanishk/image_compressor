@@ -29,6 +29,7 @@ library
       GetUserInput
       Lib
       OpenFile
+      PrintClusters
   other-modules:
       Paths_imageCompressor
   autogen-modules:
