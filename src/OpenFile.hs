@@ -8,6 +8,7 @@
 module OpenFile (Color(..), parseFiletoStruct, defaultColor) where
 
 import Text.Read (readMaybe)
+import System.Exit (exitWith, ExitCode(..))
 
 data Color =
     Color {
