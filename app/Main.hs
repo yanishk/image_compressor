@@ -45,7 +45,7 @@ main = do
 
 processFile :: ImageCompConfig -> String -> IO [Cluster]
 processFile finalConfig fileOpen = do
-    let colorList = parseFiletoStruct (lines fileOpen)
-    let nbColor = nbOfColors finalConfig
-    defCluster <- createClusters (head (removeMaybeInt nbColor)) colorList
-    return (iterateTillLimit colorList defCluster 0)
+    let pixelList = parseFiletoStruct (lines fileOpen)
+    let nbPixel = nbOfPixels finalConfig
+    defCluster <- createClusters (head (removeMaybeInt nbPixel)) pixelList
+    return (iterateTillLimit pixelList defCluster 0)

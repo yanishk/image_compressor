@@ -16,69 +16,69 @@ import Data.Maybe(fromJust, isNothing)
 
 data Cluster = Cluster
     { centroidRgb :: Maybe (Int, Int, Int),
-    clusterColors :: Maybe [Color]
+    clusterPixels :: Maybe [Pixel]
     } deriving (Show)
 
 defaultCluster :: Cluster
 defaultCluster = Cluster
    { centroidRgb = Nothing,
-     clusterColors = Nothing}
+     clusterPixels = Nothing}
 
-chooseRandomColor :: [Color] -> IO Color
-chooseRandomColor elemList = do
+chooseRandomPixel :: [Pixel] -> IO Pixel
+chooseRandomPixel elemList = do
     index <- randomRIO (0 , length elemList - 1)
     return (elemList !! index)
 
-chooseRandomCentroid :: Cluster -> [Color] -> IO Cluster
-chooseRandomCentroid cluster colorList = do
-    randomColor <- chooseRandomColor colorList
-    return cluster {centroidRgb = rgb randomColor}
+chooseRandomCentroid :: Cluster -> [Pixel] -> IO Cluster
+chooseRandomCentroid cluster pixelList = do
+    randomPixel <- chooseRandomPixel pixelList
+    return cluster {centroidRgb = rgb randomPixel}
 
-createClusters :: Int -> [Color] -> IO [Cluster]
+createClusters :: Int -> [Pixel] -> IO [Cluster]
 createClusters 0 _ = return []
-createClusters n colorList = do
-    cluster <- chooseRandomCentroid defaultCluster colorList
-    rest <- createClusters (n - 1) colorList
+createClusters n pixelList = do
+    cluster <- chooseRandomCentroid defaultCluster pixelList
+    rest <- createClusters (n - 1) pixelList
     return (cluster:rest)
 
 distance :: (Int, Int, Int) -> (Int, Int, Int) -> Double
 distance (x1,y1,z1) (x2,y2,z2) = sqrt (fromIntegral nb)
     where nb = (x1 - x2)^(2::Int) + (y1 - y2)^(2::Int) + (z1 - z2)^(2::Int)
 
-closest :: Color -> Maybe Double -> Int -> Int -> [Cluster] -> Int
+closest :: Pixel -> Maybe Double -> Int -> Int -> [Cluster] -> Int
 closest _ _ index _ [] = index
-closest color Nothing 0 0 (cluster:rest) = closest color dist 0 1 rest
+closest pixel Nothing 0 0 (cluster:rest) = closest pixel dist 0 1 rest
     where
-        dist = Just (distance (fromJust (rgb color))
+        dist = Just (distance (fromJust (rgb pixel))
             (fromJust (centroidRgb cluster)))
-closest color dist2 index iteration (cluster:rest)
-    | dist2 > dist = closest color dist iteration (iteration + 1) rest
-    | otherwise = closest color dist2 index iteration rest
+closest pixel dist2 index iteration (cluster:rest)
+    | dist2 > dist = closest pixel dist iteration (iteration + 1) rest
+    | otherwise = closest pixel dist2 index iteration rest
     where
-        dist = Just (distance (fromJust (rgb color))
+        dist = Just (distance (fromJust (rgb pixel))
             (fromJust (centroidRgb cluster)))
 
-putColor :: [Cluster] -> Color -> [Cluster]
-putColor [] _ = []
-putColor clusts color =
+putPixel :: [Cluster] -> Pixel -> [Cluster]
+putPixel [] _ = []
+putPixel clusts pixel =
     take index clusts ++ [newCluster] ++ drop (index + 1) clusts
     where
-        index = closest color Nothing 0 0 clusts
+        index = closest pixel Nothing 0 0 clusts
         closestClust = clusts !! index
-        newCluster = case clusterColors closestClust of
-            Nothing -> closestClust {clusterColors = Just [color]}
-            Just colorList -> closestClust {clusterColors
-                = Just (colorList ++ [color])}
+        newCluster = case clusterPixels closestClust of
+            Nothing -> closestClust {clusterPixels = Just [pixel]}
+            Just pixelList -> closestClust {clusterPixels
+                = Just (pixelList ++ [pixel])}
 
-recursivePutColor :: [Color] -> [Cluster] -> [Cluster]
-recursivePutColor [] clusts = clusts
-recursivePutColor colorList clusts = foldl putColor clusts colorList
+recursivePutPixel :: [Pixel] -> [Cluster] -> [Cluster]
+recursivePutPixel [] clusts = clusts
+recursivePutPixel pixelList clusts = foldl putPixel clusts pixelList
 
-getColorsPos :: [Color] -> [(Int, Int, Int)]
-getColorsPos [] = []
-getColorsPos colorList = map (fromJust . rgb) colorList
+getPixelsPos :: [Pixel] -> [(Int, Int, Int)]
+getPixelsPos [] = []
+getPixelsPos pixelList = map (fromJust . rgb) pixelList
 
-meanCentroid :: [Color] -> (Int, Int, Int) -> [(Int, Int, Int)] -> (Int, Int, Int)
+meanCentroid :: [Pixel] -> (Int, Int, Int) -> [(Int, Int, Int)] -> (Int, Int, Int)
 meanCentroid list (x,y,z) [] = (div x nbElem, div y nbElem, div z nbElem)
     where
         nbElem = length list
@@ -88,29 +88,29 @@ meanCentroid list (x1, y1, z1) ((x2,y2,z2):r) = meanCentroid list truple r
 
 newCentroid :: Cluster -> Cluster
 newCentroid clust
-    | isNothing (clusterColors clust) = clust
+    | isNothing (clusterPixels clust) = clust
     | otherwise = clust {centroidRgb = Just newCentroidRgb}
         where
-            newCentroidRgb = meanCentroid (fromJust (clusterColors clust))
-                (0, 0, 0) (getColorsPos (fromJust (clusterColors clust)))
+            newCentroidRgb = meanCentroid (fromJust (clusterPixels clust))
+                (0, 0, 0) (getPixelsPos (fromJust (clusterPixels clust)))
 
 recursiveNewCentroid :: [Cluster] -> [Cluster]
 recursiveNewCentroid [] = []
 recursiveNewCentroid clusts = map newCentroid clusts
 
-deleteColorList :: Cluster -> Cluster
-deleteColorList clust = clust {clusterColors = Nothing}
+deletePixelList :: Cluster -> Cluster
+deletePixelList clust = clust {clusterPixels = Nothing}
 
 recursiveDeleteList :: [Cluster] -> [Cluster]
 recursiveDeleteList [] = []
-recursiveDeleteList clusts = map deleteColorList clusts
+recursiveDeleteList clusts = map deletePixelList clusts
 
-iterateTillLimit :: [Color] -> [Cluster] -> Int -> [Cluster]
+iterateTillLimit :: [Pixel] -> [Cluster] -> Int -> [Cluster]
 iterateTillLimit _ clusts 15 = clusts
-iterateTillLimit colorL clusts 0 = iterateTillLimit colorL newClusts 1
+iterateTillLimit pixelL clusts 0 = iterateTillLimit pixelL newClusts 1
     where
-        newClusts = recursivePutColor colorL clusts
-iterateTillLimit colorL clusts n =  iterateTillLimit colorL newClusts (n + 1)
+        newClusts = recursivePutPixel pixelL clusts
+iterateTillLimit pixelL clusts n =  iterateTillLimit pixelL newClusts (n + 1)
     where
-        newClusts = recursivePutColor colorL resetClusts
+        newClusts = recursivePutPixel pixelL resetClusts
         resetClusts = recursiveDeleteList (recursiveNewCentroid clusts)

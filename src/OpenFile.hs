@@ -5,21 +5,31 @@
 -- OpenFile
 -}
 
-module OpenFile (Color(..), parseFiletoStruct, defaultColor) where
+module OpenFile (Pixel(..), parseFiletoStruct, defaultPixel) where
 
 import Text.Read (readMaybe)
 
-data Color =
-    Color {
+data Pixel =
+    Pixel {
         pos :: Maybe (Int, Int),
         rgb :: Maybe (Int, Int, Int)
     } deriving (Show, Eq)
 
-defaultColor :: Color
-defaultColor = Color
+defaultPixel :: Pixel
+defaultPixel = Pixel
     { pos = Nothing,
       rgb = Nothing
     }
+
+isAShort :: Int -> Bool
+isAShort nb
+    | nb >= 0 && nb <= 255 = True
+    | otherwise = False
+
+checkTuple :: (Int, Int, Int) -> Bool
+checkTuple (x, y, z)
+    | isAShort x && isAShort y && isAShort z = True
+    | otherwise = False
 
 replaceSpecialChars :: Char -> Char
 replaceSpecialChars c
@@ -41,18 +51,17 @@ makeTriple str = case map readMaybe (words (cleanString str)) of
     [Just a, Just b, Just c] -> Just (a, b, c)
     _ -> Nothing
 
-putIntoData :: [String] -> [Color]
+putIntoData :: [String] -> [Pixel]
 putIntoData [] = []
 putIntoData str =
     let p = makeDouble (head str)
         c = makeTriple (head (tail str))
     in case (p, c) of
-        (Just posCpy, Just rgbCpy) -> [defaultColor {pos = Just posCpy,
+        (Just posCpy, Just rgbCpy) -> [defaultPixel {pos = Just posCpy,
             rgb = Just rgbCpy}]
         _ -> []
 
-
-parseFiletoStruct :: [String] -> [Color]
+parseFiletoStruct :: [String] -> [Pixel]
 parseFiletoStruct [] = []
 parseFiletoStruct str = putIntoData (words (head str))
     ++ parseFiletoStruct (tail str)

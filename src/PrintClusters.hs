@@ -11,16 +11,16 @@ import OpenFile
 import Cluster
 import Data.Maybe(fromJust)
 
-printColor :: Color -> IO ()
-printColor color = putStr (show (fromJust (pos color)))
-                    >> putStr " " >> print (fromJust (rgb color))
+printPixel :: Pixel -> IO ()
+printPixel pixel = putStr (show (fromJust (pos pixel)))
+                    >> putStr " " >> print (fromJust (rgb pixel))
 
-printColorList :: Maybe [Color] -> Int -> IO ()
-printColorList (Just []) _ = putStr ""
-printColorList Nothing _ = putStrLn "-"
-printColorList colors 0 = putStrLn "-" >> printColorList colors 1
-printColorList (Just (color:rest)) n = printColor color >>
-                                        printColorList (Just rest) (n + 1)
+printPixelList :: Maybe [Pixel] -> Int -> IO ()
+printPixelList (Just []) _ = putStr ""
+printPixelList Nothing _ = putStrLn "-"
+printPixelList pixels 0 = putStrLn "-" >> printPixelList pixels 1
+printPixelList (Just (pixel:rest)) n = printPixel pixel >>
+                                        printPixelList (Just rest) (n + 1)
 
 printCentroid :: (Int, Int, Int) -> IO ()
 printCentroid centroid = putStrLn "--" >> print centroid
@@ -28,5 +28,5 @@ printCentroid centroid = putStrLn "--" >> print centroid
 printClusters :: [Cluster] -> IO ()
 printClusters [] = putStr ""
 printClusters (cluster:r) = printCentroid (fromJust (centroidRgb cluster))
-                            >> printColorList (clusterColors cluster) 0
+                            >> printPixelList (clusterPixels cluster) 0
                             >> printClusters r
