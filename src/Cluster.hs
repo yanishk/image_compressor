@@ -105,12 +105,29 @@ recursiveDeleteList :: [Cluster] -> [Cluster]
 recursiveDeleteList [] = []
 recursiveDeleteList clusts = map deletePixelList clusts
 
-iterateTillLimit :: [Pixel] -> [Cluster] -> Int -> [Cluster]
-iterateTillLimit _ clusts 15 = clusts
-iterateTillLimit pixelL clusts 0 = iterateTillLimit pixelL newClusts 1
+checkLimit :: Cluster -> Cluster -> Double -> Bool
+checkLimit clust1 clust2 limit
+    | distance (fromJust(centroidRgb clust1))
+        (fromJust(centroidRgb clust2)) > limit = False
+    | otherwise = True
+
+recursiveCheckLimit :: [Cluster] -> [Cluster] -> Double -> Bool -> Bool
+recursiveCheckLimit _ _ _ True = True
+recursiveCheckLimit [] _  _ False = False
+recursiveCheckLimit _ [] _ False = False
+recursiveCheckLimit (clusts1:rest1) (clusts2:rest2) limit False =
+    recursiveCheckLimit rest1 rest2 limit (checkLimit clusts1 clusts2 limit)
+
+iterateTillLimit :: [Pixel] -> [Cluster] -> Double -> Maybe Bool -> [Cluster]
+iterateTillLimit _ clusts _ (Just True) = clusts
+iterateTillLimit pixelL clusts limit Nothing =
+    iterateTillLimit pixelL newClusts limit boolRes
     where
         newClusts = recursivePutPixel pixelL clusts
-iterateTillLimit pixelL clusts n =  iterateTillLimit pixelL newClusts (n + 1)
+        boolRes = Just False
+iterateTillLimit pixelL clusts limit (Just False) =
+    iterateTillLimit pixelL newClusts limit boolRes
     where
         newClusts = recursivePutPixel pixelL resetClusts
         resetClusts = recursiveDeleteList (recursiveNewCentroid clusts)
+        boolRes = Just (recursiveCheckLimit clusts clusts limit False)

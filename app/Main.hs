@@ -46,10 +46,11 @@ processFile finalConfig fileOpen = do
     let pixelList = parseFiletoStruct (lines fileOpen)
     checkLetter (compStructFile pixelList (lines fileOpen))
     let nbPixel = nbOfPixels finalConfig
+    let limit = convergenceLimit finalConfig
     defCluster <- createClusters (head (removeMaybeInt nbPixel)) pixelList
-    return (iterateTillLimit pixelList defCluster 0)
+    return (iterateTillLimit pixelList defCluster (fromJust limit) Nothing)
     case checkAllTuples pixelList of
-        True -> return (iterateTillLimit pixelList defCluster 0)
+        True -> return (iterateTillLimit pixelList defCluster (fromJust limit) Nothing)
         False -> exitWith (ExitFailure 84)
 
 main :: IO ()
