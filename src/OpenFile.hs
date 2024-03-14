@@ -45,9 +45,7 @@ replaceSpecialChars c
   | otherwise = c
 
 cleanString :: String -> String
-cleanString str = filter isAllowedChar (map replaceSpecialChars str)
-  where
-    isAllowedChar c = c `elem` "0123456789, "
+cleanString str = map replaceSpecialChars str
 
 makeDouble :: String -> Maybe (Int, Int)
 makeDouble str = case map readMaybe (words (cleanString str)) of

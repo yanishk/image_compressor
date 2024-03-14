@@ -32,9 +32,19 @@ finalReadFile col =
     maybereadFile (notMaybeFilepath)
         where notMaybeFilepath = fromJust (filePath col)
 
+compStructFile :: [Pixel] -> [String] -> Bool
+compStructFile listPixel file
+    | length listPixel == length file = True
+    | otherwise = False
+
+checkLetter :: Bool -> IO()
+checkLetter True = putStr ""
+checkLetter False = exitWith (ExitFailure 84)
+
 processFile :: ImageCompConfig -> String -> IO [Cluster]
 processFile finalConfig fileOpen = do
     let pixelList = parseFiletoStruct (lines fileOpen)
+    checkLetter (compStructFile pixelList (lines fileOpen))
     let nbPixel = nbOfPixels finalConfig
     defCluster <- createClusters (head (removeMaybeInt nbPixel)) pixelList
     return (iterateTillLimit pixelList defCluster 0)
