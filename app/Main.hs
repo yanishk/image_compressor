@@ -12,9 +12,9 @@ import OpenFile
 import Cluster
 import PrintClusters
 import System.Environment(getArgs)
-import Data.Maybe
 import System.Exit (exitWith, ExitCode(ExitFailure))
 import System.Directory(doesFileExist)
+import Data.Maybe (fromJust)
 
 removeMaybeInt :: Maybe Int -> [Int]
 removeMaybeInt Nothing = []
@@ -43,7 +43,8 @@ checkLetter False = exitWith (ExitFailure 84)
 
 checkIsAShort :: Bool -> [Pixel] -> [Cluster] -> Maybe Double -> IO [Cluster]
 checkIsAShort True pixelList defCluster limit =
-    return (iterateTillLimit pixelList defCluster (fromJust limit) Nothing)
+    return (iterateTillLimit pixelList defCluster
+        Nothing (fromJust limit) Nothing)
 checkIsAShort False _ _ _ = exitWith (ExitFailure 84)
 
 
@@ -51,10 +52,11 @@ processFile :: ImageCompConfig -> String -> IO [Cluster]
 processFile finalConfig fileOpen = do
     let pixelList = parseFiletoStruct (lines fileOpen)
     checkLetter (compStructFile pixelList (lines fileOpen))
-    let nbPixel = nbOfPixels finalConfig
+    let nbClusters = nbOfColors finalConfig
     let limit = convergenceLimit finalConfig
-    defCluster <- createClusters (head (removeMaybeInt nbPixel)) pixelList
-    return (iterateTillLimit pixelList defCluster (fromJust limit) Nothing)
+    defCluster <- createClusters (head (removeMaybeInt nbClusters)) pixelList
+    return (iterateTillLimit pixelList defCluster
+        Nothing (fromJust limit) Nothing)
     checkIsAShort (checkAllTuples pixelList) pixelList defCluster limit
 
 main :: IO ()

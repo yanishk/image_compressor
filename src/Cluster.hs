@@ -11,7 +11,7 @@ module Cluster
     iterateTillLimit) where
 
 import OpenFile
-import System.Random(randomRIO)
+import System.Random(randomR, newStdGen, StdGen)
 import Data.Maybe(fromJust, isNothing)
 
 data Cluster = Cluster
@@ -24,15 +24,14 @@ defaultCluster = Cluster
    { centroidRgb = Nothing,
      clusterPixels = Nothing}
 
-chooseRandomPixel :: [Pixel] -> IO Pixel
-chooseRandomPixel elemList = do
-    index <- randomRIO (0 , length elemList - 1)
-    return (elemList !! index)
+chooseRandomPixel :: [Pixel] -> StdGen -> (Int, StdGen)
+chooseRandomPixel elemList = randomR (0 , length elemList - 1)
 
 chooseRandomCentroid :: Cluster -> [Pixel] -> IO Cluster
 chooseRandomCentroid cluster pixelList = do
-    randomPixel <- chooseRandomPixel pixelList
-    return cluster {centroidRgb = rgb randomPixel}
+    gen <- newStdGen
+    let randomIndex = fst (chooseRandomPixel pixelList gen)
+    return cluster {centroidRgb = rgb (pixelList !! randomIndex)}
 
 createClusters :: Int -> [Pixel] -> IO [Cluster]
 createClusters 0 _ = return []
@@ -78,11 +77,11 @@ getPixelsPos :: [Pixel] -> [(Int, Int, Int)]
 getPixelsPos [] = []
 getPixelsPos pixelList = map (fromJust . rgb) pixelList
 
-meanCentroid :: [Pixel] -> (Int, Int, Int) -> [(Int, Int, Int)] -> (Int, Int, Int)
-meanCentroid list (x,y,z) [] = (div x nbElem, div y nbElem, div z nbElem)
+meanColor :: [Pixel] -> (Int, Int, Int) -> [(Int, Int, Int)] -> (Int, Int, Int)
+meanColor list (x,y,z) [] = (div x nbElem, div y nbElem, div z nbElem)
     where
         nbElem = length list
-meanCentroid list (x1, y1, z1) ((x2,y2,z2):r) = meanCentroid list truple r
+meanColor list (x1, y1, z1) ((x2,y2,z2):r) = meanColor list truple r
     where
         truple = (x1 + x2, y1 + y2, z1 + z2)
 
@@ -91,7 +90,7 @@ newCentroid clust
     | isNothing (clusterPixels clust) = clust
     | otherwise = clust {centroidRgb = Just newCentroidRgb}
         where
-            newCentroidRgb = meanCentroid (fromJust (clusterPixels clust))
+            newCentroidRgb = meanColor (fromJust (clusterPixels clust))
                 (0, 0, 0) (getPixelsPos (fromJust (clusterPixels clust)))
 
 recursiveNewCentroid :: [Cluster] -> [Cluster]
@@ -118,16 +117,25 @@ recursiveCheckLimit _ [] _ False = False
 recursiveCheckLimit (clusts1:rest1) (clusts2:rest2) limit False =
     recursiveCheckLimit rest1 rest2 limit (checkLimit clusts1 clusts2 limit)
 
-iterateTillLimit :: [Pixel] -> [Cluster] -> Double -> Maybe Bool -> [Cluster]
-iterateTillLimit _ clusts _ (Just True) = clusts
-iterateTillLimit pixelL clusts limit Nothing =
-    iterateTillLimit pixelL newClusts limit boolRes
+iterateTillLimit :: [Pixel] -> [Cluster] -> Maybe [Cluster] -> Double -> Maybe Bool -> [Cluster]
+iterateTillLimit _ clusts _ _ (Just True) = clusts
+iterateTillLimit pixelL clusts _ limit Nothing =
+    iterateTillLimit pixelL newClusts Nothing limit boolRes
     where
         newClusts = recursivePutPixel pixelL clusts
         boolRes = Just False
-iterateTillLimit pixelL clusts limit (Just False) =
-    iterateTillLimit pixelL newClusts limit boolRes
+iterateTillLimit pixelL clusts Nothing limit (Just False) =
+    iterateTillLimit pixelL newClusts cpyClusts limit boolRes
     where
+        cpyClusts = Just clusts
         newClusts = recursivePutPixel pixelL resetClusts
         resetClusts = recursiveDeleteList (recursiveNewCentroid clusts)
-        boolRes = Just (recursiveCheckLimit clusts clusts limit False)
+        boolRes = Just False
+iterateTillLimit pixelL clusts cpyClusts limit (Just False) =
+    iterateTillLimit pixelL newClusts newCpyClusts limit boolRes
+    where
+        newCpyClusts = Just clusts
+        newClusts = recursivePutPixel pixelL resetClusts
+        resetClusts = recursiveDeleteList (recursiveNewCentroid clusts)
+        boolRes = Just (recursiveCheckLimit clusts (fromJust cpyClusts)
+            limit False)

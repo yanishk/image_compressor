@@ -27,7 +27,6 @@ library
   exposed-modules:
       Cluster
       GetUserInput
-      Lib
       OpenFile
       PrintClusters
   other-modules:
