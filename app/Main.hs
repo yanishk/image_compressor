@@ -41,6 +41,12 @@ checkLetter :: Bool -> IO()
 checkLetter True = putStr ""
 checkLetter False = exitWith (ExitFailure 84)
 
+checkIsAShort :: Bool -> [Pixel] -> [Cluster] -> Maybe Double -> IO [Cluster]
+checkIsAShort True pixelList defCluster limit =
+    return (iterateTillLimit pixelList defCluster (fromJust limit) Nothing)
+checkIsAShort False _ _ _ = exitWith (ExitFailure 84)
+
+
 processFile :: ImageCompConfig -> String -> IO [Cluster]
 processFile finalConfig fileOpen = do
     let pixelList = parseFiletoStruct (lines fileOpen)
@@ -49,9 +55,7 @@ processFile finalConfig fileOpen = do
     let limit = convergenceLimit finalConfig
     defCluster <- createClusters (head (removeMaybeInt nbPixel)) pixelList
     return (iterateTillLimit pixelList defCluster (fromJust limit) Nothing)
-    case checkAllTuples pixelList of
-        True -> return (iterateTillLimit pixelList defCluster (fromJust limit) Nothing)
-        False -> exitWith (ExitFailure 84)
+    checkIsAShort (checkAllTuples pixelList) pixelList defCluster limit
 
 main :: IO ()
 main = do
