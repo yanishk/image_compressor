@@ -13,6 +13,8 @@ import Cluster
 import PrintClusters
 import System.Environment(getArgs)
 import System.Exit (exitWith, ExitCode(ExitFailure))
+import Control.Exception
+import System.IO.Error
 import Data.Maybe (fromJust)
 
 removeMaybeInt :: Maybe Int -> [Int]
@@ -20,7 +22,13 @@ removeMaybeInt Nothing = []
 removeMaybeInt (Just x) = [x]
 
 maybereadFile :: String -> IO String
-maybereadFile path = readFile path
+maybereadFile path = readFile path `catch` handlingFailRead
+    where
+        handlingFailRead :: IOError -> IO String
+        handlingFailRead errorFile
+            | isDoesNotExistError errorFile = exitWith (ExitFailure 84)
+            | isPermissionError errorFile = exitWith (ExitFailure 84)
+            | otherwise = readFile path
 
 finalReadFile :: ImageCompConfig -> IO (String)
 finalReadFile col =
