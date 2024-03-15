@@ -77,9 +77,18 @@ getPixelsPos :: [Pixel] -> [(Int, Int, Int)]
 getPixelsPos [] = []
 getPixelsPos pixelList = map (fromJust . rgb) pixelList
 
+myRound :: Double -> Int
+myRound nb
+    | snd (properFraction nb ::(Int,Double)) > 0.5 =
+        fst (properFraction nb) + 1
+    | otherwise = fst (properFraction nb)
+
 meanColor :: [Pixel] -> (Int, Int, Int) -> [(Int, Int, Int)] -> (Int, Int, Int)
-meanColor list (x,y,z) [] = (div x nbElem, div y nbElem, div z nbElem)
+meanColor list (x,y,z) [] = (newX, newY, newZ)
     where
+        newX = myRound ((fromIntegral x / fromIntegral nbElem)::Double)
+        newY = myRound ((fromIntegral y / fromIntegral nbElem)::Double)
+        newZ = myRound ((fromIntegral z / fromIntegral nbElem)::Double)
         nbElem = length list
 meanColor list (x1, y1, z1) ((x2,y2,z2):r) = meanColor list truple r
     where
