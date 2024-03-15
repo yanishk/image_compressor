@@ -41,7 +41,7 @@ compStructFile listPixel file
     | otherwise = False
 
 checkLetter :: Bool -> IO()
-checkLetter True = putStr ""
+checkLetter True = return ()
 checkLetter False = exitWith (ExitFailure 84)
 
 checkIsAShort :: Bool -> [Pixel] -> [Cluster] -> Maybe Double -> IO [Cluster]

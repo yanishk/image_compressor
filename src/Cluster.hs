@@ -119,12 +119,18 @@ checkLimit clust1 clust2 limit
         (fromJust(centroidRgb clust2)) > limit = False
     | otherwise = True
 
-recursiveCheckLimit :: [Cluster] -> [Cluster] -> Double -> Bool -> Bool
-recursiveCheckLimit _ _ _ True = True
-recursiveCheckLimit [] _  _ False = False
-recursiveCheckLimit _ [] _ False = False
-recursiveCheckLimit (clusts1:rest1) (clusts2:rest2) limit False =
-    recursiveCheckLimit rest1 rest2 limit (checkLimit clusts1 clusts2 limit)
+recursiveCheckLimit :: [Cluster] -> [Cluster] -> Double -> [Bool] -> [Bool]
+recursiveCheckLimit [] _ _ boolList = boolList
+recursiveCheckLimit _ [] _ boolList = boolList
+recursiveCheckLimit (clusts1:rest1) (clusts2:rest2) limit boolList =
+    recursiveCheckLimit rest1 rest2 limit newBoolList
+    where
+        newBoolList = checkLimit clusts1 clusts2 limit:boolList
+
+checkClustersLimit :: [Bool] -> Bool
+checkClustersLimit boolList
+    | False `elem` boolList = False
+    | otherwise = True
 
 iterateTillLimit :: [Pixel] -> [Cluster] -> Maybe [Cluster] -> Double -> Maybe Bool -> [Cluster]
 iterateTillLimit _ clusts _ _ (Just True) = clusts
@@ -146,5 +152,5 @@ iterateTillLimit pixelL clusts cpyClusts limit (Just False) =
         newCpyClusts = Just clusts
         newClusts = recursivePutPixel pixelL resetClusts
         resetClusts = recursiveDeleteList (recursiveNewCentroid clusts)
-        boolRes = Just (recursiveCheckLimit clusts (fromJust cpyClusts)
-            limit False)
+        boolList = recursiveCheckLimit clusts (fromJust cpyClusts) limit []
+        boolRes = Just (checkClustersLimit boolList)
