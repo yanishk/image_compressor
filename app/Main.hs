@@ -57,7 +57,8 @@ processFile finalConfig fileOpen = do
     checkLetter (compStructFile pixelList (lines fileOpen))
     let nbClusters = nbOfColors finalConfig
     let limit = convergenceLimit finalConfig
-    defCluster <- createClusters (head (removeMaybeInt nbClusters)) pixelList []
+    defCluster <- createClusters (head (removeMaybeInt nbClusters))
+        pixelList []
     return (iterateTillLimit pixelList defCluster
         Nothing (fromJust limit) Nothing)
     checkIsAShort (checkAllTuples pixelList) pixelList defCluster limit
