@@ -33,12 +33,24 @@ chooseRandomCentroid cluster pixelList = do
     let randomIndex = fst (chooseRandomPixel pixelList gen)
     return cluster {centroidRgb = rgb (pixelList !! randomIndex)}
 
-createClusters :: Int -> [Pixel] -> IO [Cluster]
-createClusters 0 _ = return []
-createClusters n pixelList = do
-    cluster <- chooseRandomCentroid defaultCluster pixelList
-    rest <- createClusters (n - 1) pixelList
-    return (cluster:rest)
+compareCentroids :: Cluster -> [Cluster] -> Bool
+compareCentroids _ [] = False
+compareCentroids cluster (clust:rest)
+    | distance (fromJust (centroidRgb cluster))
+        (fromJust(centroidRgb clust)) == 0.0 = True
+    | otherwise = compareCentroids cluster rest
+
+validNewCentroid :: Int -> [Pixel] -> [Cluster] -> IO [Cluster]
+validNewCentroid _ _ [] = return []
+validNewCentroid n pixelList (newClust:rest)
+    | compareCentroids newClust rest = createClusters n pixelList rest
+    | otherwise = createClusters (n - 1) pixelList (newClust : rest)
+
+createClusters :: Int -> [Pixel] -> [Cluster] -> IO [Cluster]
+createClusters 0 _ clusters = return clusters
+createClusters n pixelList clusts = do
+    newClust <- chooseRandomCentroid defaultCluster pixelList
+    validNewCentroid n pixelList (newClust:clusts)
 
 distance :: (Int, Int, Int) -> (Int, Int, Int) -> Double
 distance (x1,y1,z1) (x2,y2,z2) = sqrt (fromIntegral nb)
@@ -52,7 +64,7 @@ closest pixel Nothing 0 0 (cluster:rest) = closest pixel dist 0 1 rest
             (fromJust (centroidRgb cluster)))
 closest pixel dist2 index iteration (cluster:rest)
     | dist2 > dist = closest pixel dist iteration (iteration + 1) rest
-    | otherwise = closest pixel dist2 index iteration rest
+    | otherwise = closest pixel dist2 index (iteration + 1) rest
     where
         dist = Just (distance (fromJust (rgb pixel))
             (fromJust (centroidRgb cluster)))
