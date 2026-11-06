@@ -9,7 +9,9 @@
 ![Make](https://img.shields.io/badge/build-Make-A42E2B?logo=gnu&logoColor=white)
 ![Linux](https://img.shields.io/badge/platform-Linux-lightgrey)
 
-<img src="docs/demo.gif" alt="An image next to its compressed version, with the number of colours k increasing" width="660">
+<img src="docs/demo.gif" alt="PlayForward's robot mascot next to its compressed version, with k going from 2 to 16 colours" width="660">
+
+<sub>PlayForward's mascot compressed by the program itself, with k = 2, 3, 4, 6, 8, 12 and 16</sub>
 
 [Quick start](#quick-start) · [How it works](#how-it-works) · [Team](#team)
 
@@ -90,6 +92,12 @@ The output lists each cluster: `--`, the cluster's colour, `-`, then its pixels.
 ```
 
 The initial centroids are random, so the order of the clusters can change from one run to the next.
+
+[`docs/render.py`](docs/render.py) turns this output back into an image, giving every pixel the colour of its cluster (that is how the demo above was made):
+
+```bash
+./imageCompressor -n 8 -l 0.5 -f pixels.txt | python3 docs/render.py WIDTH HEIGHT > compressed.ppm
+```
 
 ## How it works
 
